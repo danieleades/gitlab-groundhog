@@ -1,0 +1,9 @@
+mutation CreateIssue($projectPath: ID!, $title: String!, $description: String, $due: ISO8601Date) {
+  createIssue(
+    input: {projectPath: $projectPath, title: $title, dueDate: $due, description: $description}
+  ) {
+    issue {
+      iid
+    }
+  }
+}
