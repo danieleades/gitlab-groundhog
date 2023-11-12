@@ -1,0 +1,21 @@
+{
+  "regression testing": {
+    "1": {
+      "issue_id": "1234",
+      "created": "2023-11-12",
+      "due": "2023-10-02"
+    }
+  },
+  "exploratory testing": {
+    "1": {
+      "issue_id": "1234",
+      "created": "2023-11-12",
+      "due": "2023-09-11"
+    },
+    "2": {
+      "issue_id": "1234",
+      "created": "2023-11-12",
+      "due": "2023-10-23"
+    }
+  }
+}
