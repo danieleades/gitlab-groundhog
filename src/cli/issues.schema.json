@@ -1,0 +1,45 @@
+{
+    "type": "object",
+    "additionalProperties": {
+        "type": "object",
+        "properties": {
+            "end": {
+                "type": "string",
+                "format": "date",
+                "description": "the final due date after which the issue recurrence ends"
+            },
+            "notice": {
+                "type": "string",
+                "format": "duration",
+                "description": "the duration before the due date that the issue should be created"
+            },
+            "project": {
+                "type": "string",
+                "description": "the path to the project in Gitlab",
+                "pattern": "^[a-zA-Z\\s\\/\\-]*\\.?[a-zA-Z0-9]*$"
+            },
+            "start": {
+                "type": "string",
+                "format": "date",
+                "description": "the date from which the recurring issue is first due"
+            },
+            "template": {
+                "type": "string",
+                "description": "path to the template to use for the body of the issue, relative to the templates/ directory",
+                "pattern": "^[a-zA-Z\\s\\/\\-]*\\.?[a-zA-Z0-9]*$"
+            },
+            "tempo": {
+                "type": "string",
+                "format": "duration",
+                "description": "how often the issue should recur"
+            }
+        },
+        "required": [
+            "notice",
+            "project",
+            "start",
+            "template",
+            "tempo"
+        ]
+    }
+}
