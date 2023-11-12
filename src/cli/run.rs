@@ -45,49 +45,80 @@ impl Command {
     pub async fn run(&self) -> anyhow::Result<()> {
         let issues = issues::load(&self.issues)?;
 
-        let mut ledger = ledger::load(&self.log);
+        let ledger = ledger::load(&self.log);
 
         let to_create: Vec<_> = issues_to_create(self.date, &ledger, &issues).collect();
 
-        if !to_create.is_empty() {
-            println!("to create: {to_create:#?}");
-            if self.yes || confirm() {
-                let to_record = self.send(to_create).await;
-
-                for res in to_record {
-                    match res {
-                        Ok(entry) => ledger.insert(entry),
-                        Err(e) => eprintln!("{e}"),
-                    }
-                }
-
-                ledger.save(&self.log)?;
-            }
+        if to_create.is_empty() {
+            println!("no issues to create");
+        } else {
+            self.create_issues(ledger, to_create).await?;
         }
 
         Ok(())
     }
 
-    async fn send(&self, to_create: Vec<(u32, CreateIssuePayload)>)  -> Vec<reqwest::Result<ledger::Entry>> {
-            futures::future::join_all(to_create.into_iter().map(
-                |(issue_number, payload)| async move {
-                    let name = payload.title.clone();
-                    let due = payload.due;
-                    let issue_id = graphql::create_issue(self.url.as_str(), payload).await?;
-        
-                    let entry = ledger::Entry {
-                        issue_id,
-                        created: self.date,
-                        due,
-                        name,
-                        issue_number,
-                    };
-        
-                    reqwest::Result::Ok(entry)
-                },
-            ))
-            .await
+    async fn create_issues(
+        &self,
+        mut ledger: Ledger,
+        to_create: Vec<(u32, CreateIssuePayload)>,
+    ) -> anyhow::Result<()> {
+        println!("to create: {to_create:#?}");
+        if self.confirm() {
+            let to_record = self.send_all(to_create).await;
+
+            for res in to_record {
+                match res {
+                    Ok(entry) => ledger.insert(entry),
+                    Err(e) => eprintln!("{e}"),
+                }
+            }
+            ledger.save(&self.log)
+        } else {
+            Ok(())
         }
+    }
+
+    fn confirm(&self) -> bool {
+        self.yes
+            || Confirm::new()
+                .with_prompt("create issues?")
+                .default(true)
+                .interact()
+                .unwrap()
+    }
+
+    async fn send(
+        &self,
+        issue_number: u32,
+        payload: CreateIssuePayload,
+    ) -> reqwest::Result<ledger::Entry> {
+        let name = payload.title.clone();
+        let due = payload.due;
+        let issue_id = graphql::create_issue(self.url.as_str(), payload).await?;
+
+        let entry = ledger::Entry {
+            issue_id,
+            created: self.date,
+            due,
+            name,
+            issue_number,
+        };
+
+        Ok(entry)
+    }
+
+    async fn send_all(
+        &self,
+        to_create: Vec<(u32, CreateIssuePayload)>,
+    ) -> Vec<reqwest::Result<ledger::Entry>> {
+        futures::future::join_all(
+            to_create
+                .into_iter()
+                .map(|(issue_number, payload)| self.send(issue_number, payload)),
+        )
+        .await
+    }
 }
 
 fn issues_to_create<'a>(
@@ -130,13 +161,5 @@ fn render(template: &str) -> String {
 
     templates
         .render(template, &tera::Context::default())
-        .unwrap()
-}
-
-fn confirm() -> bool {
-    Confirm::new()
-        .with_prompt("create issues?")
-        .default(true)
-        .interact()
         .unwrap()
 }
