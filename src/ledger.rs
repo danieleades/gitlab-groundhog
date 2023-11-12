@@ -1,57 +1,62 @@
 use std::collections::{BTreeMap, HashMap};
-use std::io::BufReader;
+use std::fs::File;
+use std::io::{BufReader, BufWriter};
 use std::path::Path;
-use std::{fs::File, io::BufRead};
 
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Entry {
     pub name: String,
-    #[serde(flatten)]
-    pub data: Data,
+    pub issue_number: u32,
+    pub issue_id: String,
+    pub created: NaiveDate,
+    pub due: Option<NaiveDate>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
-    pub issue_number: u32,
     pub issue_id: String,
+    pub created: NaiveDate,
+    pub due: Option<NaiveDate>,
 }
 
-type IssueNumber = u32;
-type IssueId = String;
-
-#[derive(Debug, Default)]
-pub struct Ledger {
-    pub entries: HashMap<String, BTreeMap<IssueNumber, IssueId>>,
-}
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct Ledger(HashMap<String, BTreeMap<u32, Data>>);
 
 impl Ledger {
     pub fn insert(&mut self, entry: Entry) {
-        let Entry { name, data } = entry;
-        self.entries
-            .entry(name)
-            .or_default()
-            .insert(data.issue_number, data.issue_id);
-    }
-}
+        let Entry {
+            name,
+            issue_number,
+            issue_id,
+            created,
+            due,
+        } = entry;
 
-impl FromIterator<Entry> for Ledger {
-    fn from_iter<T: IntoIterator<Item = Entry>>(iter: T) -> Self {
-        iter.into_iter().fold(Self::default(), |mut ledger, entry| {
-            ledger.insert(entry);
-            ledger
-        })
+        let data = Data {
+            issue_id,
+            created,
+            due,
+        };
+        self.0.entry(name).or_default().insert(issue_number, data);
+    }
+
+    pub fn get(&self, name: &str) -> Option<&BTreeMap<u32, Data>> {
+        self.0.get(name)
+    }
+
+    pub fn save(&self, path: impl AsRef<Path>) -> anyhow::Result<()> {
+        let file = BufWriter::new(File::options().create(true).write(true).open(path)?);
+        serde_json::to_writer_pretty(file, &self)?;
+        Ok(())
     }
 }
 
 pub fn load(path: &Path) -> Ledger {
     File::open(path)
         .map(BufReader::new)
-        .map(|file| {
-            file.lines()
-                .map(|result| serde_json::from_str(&result.unwrap()).unwrap())
-                .collect()
-        })
+        .map(|file| serde_json::from_reader(file).unwrap())
         .unwrap_or_default()
 }

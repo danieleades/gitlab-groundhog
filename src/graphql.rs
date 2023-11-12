@@ -11,20 +11,22 @@ type ISO8601Date = NaiveDate;
 )]
 pub struct CreateIssue;
 
-pub async fn create_issue(
-    url: &str,
-    project_path: String,
-    title: String,
-    description: Option<String>,
-    due: Option<NaiveDate>,
-) -> reqwest::Result<String> {
+#[derive(Debug, Clone)]
+pub struct CreateIssuePayload {
+    pub project_path: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub due: Option<NaiveDate>,
+}
+
+pub async fn create_issue(url: &str, payload: CreateIssuePayload) -> reqwest::Result<String> {
     let client = reqwest::Client::new();
 
     let variables = create_issue::Variables {
-        project_path,
-        title,
-        description,
-        due,
+        project_path: payload.project_path,
+        title: payload.title,
+        description: payload.description,
+        due: payload.due,
     };
 
     let response =

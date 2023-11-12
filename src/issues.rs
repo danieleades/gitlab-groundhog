@@ -11,6 +11,7 @@ use std::str::FromStr;
 /// A recurring Gitlab issue
 #[derive(Debug, Deserialize)]
 pub struct Issue {
+    pub project: String,
     start: NaiveDate,
     end: Option<NaiveDate>,
     #[serde(deserialize_with = "parse_humantime_duration")]
@@ -79,6 +80,7 @@ mod tests {
     #[test_case(NaiveDate::from_ymd_opt(2023, 11, 11).expect("invalid date") => 1 ; "6 days after start, issue '1' should be published")]
     fn most_recent_issue(today: NaiveDate) -> u32 {
         let issue = Issue {
+            project: "path/to/project".to_string(),
             start: NaiveDate::from_ymd_opt(2023, 11, 5).expect("invalid date"),
             end: None,
             // every week

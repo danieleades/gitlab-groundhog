@@ -5,13 +5,13 @@ regression testing:
   template: regression-testing.md
   notice: 2w
   tempo: 9w
-  start: '2023-10-31'
+  start: '2023-07-31'
   end: '2024-03-01'
 
 exploratory testing:
-  project: path/to/project
+  project: other/project
   template: regression-testing.md
   notice: 1w
   tempo: 6w
-  start: '2023-10-31'
+  start: '2023-07-31'
   end: '2024-06-01'

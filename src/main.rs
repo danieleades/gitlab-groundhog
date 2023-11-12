@@ -15,7 +15,8 @@ mod graphql;
 mod issues;
 mod ledger;
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let command = cli::Command::parse();
-    command.run()
+    command.run().await
 }

@@ -10,9 +10,9 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn run(&self) -> anyhow::Result<()> {
+    pub async fn run(&self) -> anyhow::Result<()> {
         match self {
-            Self::Run(command) => command.run(),
+            Self::Run(command) => command.run().await,
             Self::Init => todo!(),
         }
     }

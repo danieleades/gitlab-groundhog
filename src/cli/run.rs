@@ -1,23 +1,29 @@
-use std::{io::Write, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf};
 
 use chrono::NaiveDate;
 use clap::Parser;
-use serde::Serialize;
+use dialoguer::Confirm;
+use reqwest::Url;
 use tera::Tera;
 
 use crate::{
-    issues,
-    ledger::{self, Data, Entry},
+    graphql::{self, CreateIssuePayload},
+    issues::{self, Issue},
+    ledger::{self, Ledger},
 };
 
 #[derive(Debug, Parser)]
 pub struct Command {
     /// Path to directory containing template files.
+    #[arg(short, long, env = "GROUNDHOG_GITLAB_URL")]
+    url: Url,
+
+    /// Path to directory containing template files.
     #[arg(short, long, env = "GROUNDHOG_TEMPLATES", default_value = "templates/")]
     templates: PathBuf,
 
     /// Path to the groundhog log file
-    #[arg(short, long, env = "GROUNDHOG_LOG", default_value = "log.jsonl")]
+    #[arg(short, long, env = "GROUNDHOG_LOG", default_value = "ledger.json")]
     log: PathBuf,
 
     /// Path to the yaml file defining the recurring issues
@@ -29,68 +35,108 @@ pub struct Command {
     /// Useful for debugging.
     #[arg(short, long, default_value_t = chrono::Local::now().date_naive())]
     date: NaiveDate,
+
+    /// If this flag is set, don't prompt user to confirm before creating new issues
+    #[arg(short, long)]
+    yes: bool,
 }
 
 impl Command {
-    pub fn run(&self) -> anyhow::Result<()> {
+    pub async fn run(&self) -> anyhow::Result<()> {
         let issues = issues::load(&self.issues)?;
-        println!("issues: {:?}", &issues);
-        let ledger = ledger::load(&self.log);
 
-        let mut file = std::fs::File::options()
-            .create(true)
-            .append(true)
-            .open("log.jsonl")?;
+        let mut ledger = ledger::load(&self.log);
 
-        for (name, issue) in &issues {
-            let current_issue = issue.most_recent_issue(self.date);
+        let to_create: Vec<_> = issues_to_create(self.date, &ledger, &issues).collect();
 
-            dbg!(&current_issue);
+        if !to_create.is_empty() {
+            println!("to create: {to_create:#?}");
+            if self.yes || confirm() {
+                let to_record = self.send(to_create).await;
 
-            let last_published = ledger
-                .entries
-                .get(name)
-                .and_then(|entries| entries.keys().last())
-                .unwrap_or(&0);
-            for n in *last_published + 1..=current_issue {
-                println!("sending issue number: {n}!");
-                let due = issue.due_date(n);
-                let rendered = render(issue.template(), due);
-                print!("{rendered}");
-                let issue_id = send_issue();
-                let entry = Entry {
-                    name: name.to_string(),
-                    data: Data {
-                        issue_number: n,
-                        issue_id,
-                    },
-                };
+                for res in to_record {
+                    match res {
+                        Ok(entry) => ledger.insert(entry),
+                        Err(e) => eprintln!("{e}"),
+                    }
+                }
 
-                let mut entry_string = serde_json::to_string(&entry).unwrap();
-                entry_string.push('\n');
-                file.write_all(entry_string.as_bytes())?;
+                ledger.save(&self.log)?;
             }
         }
 
         Ok(())
     }
+
+    async fn send(&self, to_create: Vec<(u32, CreateIssuePayload)>)  -> Vec<reqwest::Result<ledger::Entry>> {
+            futures::future::join_all(to_create.into_iter().map(
+                |(issue_number, payload)| async move {
+                    let name = payload.title.clone();
+                    let due = payload.due;
+                    let issue_id = graphql::create_issue(self.url.as_str(), payload).await?;
+        
+                    let entry = ledger::Entry {
+                        issue_id,
+                        created: self.date,
+                        due,
+                        name,
+                        issue_number,
+                    };
+        
+                    reqwest::Result::Ok(entry)
+                },
+            ))
+            .await
+        }
 }
 
-#[derive(Debug, Serialize)]
-struct Context {
-    due: NaiveDate,
+fn issues_to_create<'a>(
+    date: NaiveDate,
+    ledger: &'a Ledger,
+    issues: &'a HashMap<String, Issue>,
+) -> impl Iterator<Item = (u32, CreateIssuePayload)> + 'a {
+    issues
+        .iter()
+        .flat_map(move |(name, issue)| issues_to_create_for_name(date, ledger, (name, issue)))
 }
 
-fn render(template: &str, due: NaiveDate) -> String {
+fn issues_to_create_for_name<'a>(
+    date: NaiveDate,
+    ledger: &'a Ledger,
+    (name, issue): (&'a String, &'a Issue),
+) -> impl Iterator<Item = (u32, CreateIssuePayload)> + 'a {
+    let current_issue = issue.most_recent_issue(date);
+
+    let last_published = ledger
+        .get(name)
+        .and_then(|entries| entries.keys().last())
+        .copied()
+        .unwrap_or(0);
+
+    (last_published + 1..=current_issue).map(move |issue_number| {
+        let payload = CreateIssuePayload {
+            project_path: issue.project.clone(),
+            description: Some(render(issue.template())),
+            due: Some(issue.due_date(issue_number)),
+            title: name.to_string(),
+        };
+
+        (issue_number, payload)
+    })
+}
+
+fn render(template: &str) -> String {
     let templates = Tera::new("templates/**/*").unwrap();
 
-    let context = Context { due };
-
     templates
-        .render(template, &tera::Context::from_serialize(context).unwrap())
+        .render(template, &tera::Context::default())
         .unwrap()
 }
 
-fn send_issue() -> String {
-    "1234".to_string()
+fn confirm() -> bool {
+    Confirm::new()
+        .with_prompt("create issues?")
+        .default(true)
+        .interact()
+        .unwrap()
 }
