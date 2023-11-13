@@ -1,4 +1,7 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+};
 
 use chrono::NaiveDate;
 use clap::Parser;
@@ -144,27 +147,23 @@ fn issues_to_create_for_name<'a>(
 ) -> impl Iterator<Item = (u32, CreateIssuePayload)> + 'a {
     let current_issue = issue.most_recent_issue(date);
 
-    let last_published = ledger
+    let already_issued = ledger
         .get(name)
-        .and_then(|entries| entries.keys().last())
-        .copied()
-        .unwrap_or(0);
+        .map(|entries| entries.keys().copied().collect())
+        .unwrap_or_default();
 
-    current_issue
-        .map(|current_issue| {
-            (last_published + 1..=current_issue).map(move |issue_number| {
-                let payload = CreateIssuePayload {
-                    project_path: issue.project.clone(),
-                    description: Some(render(issue.template())),
-                    due: Some(issue.due_date(issue_number)),
-                    title: name.to_string(),
-                };
+    let to_issue = missing_issue_numbers(&already_issued, current_issue);
 
-                (issue_number, payload)
-            })
-        })
-        .into_iter()
-        .flatten()
+    to_issue.into_iter().map(|issue_number| {
+        let payload = CreateIssuePayload {
+            project_path: issue.project.clone(),
+            description: Some(render(issue.template())),
+            due: Some(issue.due_date(issue_number)),
+            title: name.to_string(),
+        };
+
+        (issue_number, payload)
+    })
 }
 
 fn render(template: &str) -> String {
@@ -173,4 +172,31 @@ fn render(template: &str) -> String {
     templates
         .render(template, &tera::Context::default())
         .unwrap()
+}
+
+/// Find all missing numbers up to and including the current issue that have not already been issued.
+///
+/// 'already issued' is an iterator over values already issued, in ascending order.
+fn missing_issue_numbers(already_issued: &HashSet<u32>, current_issue: Option<u32>) -> Vec<u32> {
+    current_issue.map_or_else(Vec::default, |current_issue| {
+        (0..=current_issue)
+            .filter(|&n| !already_issued.contains(&n))
+            .collect()
+    })
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn missing_issue_numbers() {
+        let current_issue = Some(5);
+        let already_issued = [0, 1, 3, 5];
+        let expected = vec![2, 4];
+
+        let actual =
+            super::missing_issue_numbers(&already_issued.into_iter().collect(), current_issue);
+
+        assert_eq!(expected, actual);
+    }
 }
