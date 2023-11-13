@@ -6,7 +6,7 @@ use std::path::Path;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct Entry {
     pub name: String,
     pub issue_number: u32,
@@ -76,11 +76,11 @@ mod tests {
             name: "path/to/project".to_string(),
             issue_number: 2,
             issue_id: "1234".to_string(),
-            created: NaiveDate::from_ymd_opt(2024, 01, 01).unwrap(),
-            due: Some(NaiveDate::from_ymd_opt(2024, 01, 01).unwrap()),
+            created: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+            due: Some(NaiveDate::from_ymd_opt(2024, 1, 1).unwrap()),
         };
 
-        ledger.insert(entry.clone());
+        ledger.insert(entry);
 
         assert!(ledger.get("wrong/project").is_none());
         assert!(ledger.get("path/to/project").is_some());
