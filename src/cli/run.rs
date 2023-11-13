@@ -39,6 +39,12 @@ pub struct Command {
     /// If this flag is set, don't prompt user to confirm before creating new issues
     #[arg(short, long)]
     yes: bool,
+
+    /// The gitlab API key.
+    ///
+    /// This should usually be set by environment variable
+    #[arg(short, long, env = "GTILAB_API_KEY")]
+    api: String,
 }
 
 impl Command {
@@ -95,7 +101,7 @@ impl Command {
     ) -> reqwest::Result<ledger::Entry> {
         let name = payload.title.clone();
         let due = payload.due;
-        let issue_id = graphql::create_issue(self.url.as_str(), payload).await?;
+        let issue_id = graphql::create_issue(self.url.as_str(), &self.api, payload).await?;
 
         let entry = ledger::Entry {
             issue_id,
