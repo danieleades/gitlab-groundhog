@@ -51,7 +51,7 @@ impl Command {
     pub async fn run(&self) -> anyhow::Result<()> {
         let issues = issues::load(&self.issues)?;
 
-        let ledger = Ledger::load(&self.log);
+        let ledger = Ledger::load(&self.log)?;
 
         let to_create: Vec<_> = issues_to_create(self.date, &ledger, &issues).collect();
 

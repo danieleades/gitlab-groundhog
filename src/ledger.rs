@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::File;
-use std::io::{BufReader, BufWriter};
+use std::io::{self, BufReader, BufWriter};
 use std::path::Path;
 
 use chrono::NaiveDate;
@@ -26,11 +26,12 @@ pub struct Data {
 pub struct Ledger(HashMap<String, BTreeMap<u32, Data>>);
 
 impl Ledger {
-    pub fn load(path: impl AsRef<Path>) -> Self {
-        File::open(path)
-            .map(BufReader::new)
-            .map(|file| serde_json::from_reader(file).unwrap())
-            .unwrap_or_default()
+    pub fn load(path: impl AsRef<Path>) -> Result<Self, LoadError> {
+        let file = File::open(path).map(BufReader::new)?;
+
+        let ledger = serde_json::from_reader(file)?;
+
+        Ok(ledger)
     }
 
     pub fn insert(&mut self, entry: Entry) {
@@ -74,6 +75,15 @@ fn missing_issue_numbers(already_issued: &HashSet<u32>, current_issue: Option<u3
             .filter(|&n| !already_issued.contains(&n))
             .collect()
     })
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum LoadError {
+    #[error("failed to parse ledger: {0}")]
+    Json(#[from] serde_json::Error),
+
+    #[error("Failed to read the ledger file: {0}")]
+    Io(#[from] io::Error),
 }
 
 #[cfg(test)]
@@ -138,7 +148,7 @@ mod tests {
 
         ledger.save(path).unwrap();
 
-        let loaded = Ledger::load(path);
+        let loaded = Ledger::load(path).unwrap();
 
         assert_eq!(ledger, loaded);
     }
