@@ -6,7 +6,7 @@ use std::path::Path;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Entry {
     pub name: String,
     pub issue_number: u32,
@@ -59,4 +59,30 @@ pub fn load(path: &Path) -> Ledger {
         .map(BufReader::new)
         .map(|file| serde_json::from_reader(file).unwrap())
         .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::NaiveDate;
+
+    use super::Entry;
+    use super::Ledger;
+
+    #[test]
+    fn insert() {
+        let mut ledger = Ledger::default();
+
+        let entry = Entry {
+            name: "path/to/project".to_string(),
+            issue_number: 2,
+            issue_id: "1234".to_string(),
+            created: NaiveDate::from_ymd_opt(2024, 01, 01).unwrap(),
+            due: Some(NaiveDate::from_ymd_opt(2024, 01, 01).unwrap()),
+        };
+
+        ledger.insert(entry.clone());
+
+        assert!(ledger.get("wrong/project").is_none());
+        assert!(ledger.get("path/to/project").is_some());
+    }
 }
