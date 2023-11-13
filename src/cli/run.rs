@@ -79,7 +79,8 @@ impl Command {
                     Err(e) => eprintln!("{e}"),
                 }
             }
-            ledger.save(&self.log)
+            ledger.save(&self.log)?;
+            Ok(())
         } else {
             Ok(())
         }

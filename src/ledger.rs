@@ -51,9 +51,9 @@ impl Ledger {
         self.0.entry(name).or_default().insert(issue_number, data);
     }
 
-    pub fn save(&self, path: impl AsRef<Path>) -> anyhow::Result<()> {
+    pub fn save(&self, path: impl AsRef<Path>) -> io::Result<()> {
         let file = BufWriter::new(File::options().create(true).write(true).open(path)?);
-        serde_json::to_writer_pretty(file, &self)?;
+        serde_json::to_writer_pretty(file, &self).unwrap();
         Ok(())
     }
 
