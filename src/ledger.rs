@@ -15,17 +15,24 @@ pub struct Entry {
     pub due: Option<NaiveDate>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct Data {
     pub issue_id: String,
     pub created: NaiveDate,
     pub due: Option<NaiveDate>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Ledger(HashMap<String, BTreeMap<u32, Data>>);
 
 impl Ledger {
+    pub fn load(path: impl AsRef<Path>) -> Self {
+        File::open(path)
+            .map(BufReader::new)
+            .map(|file| serde_json::from_reader(file).unwrap())
+            .unwrap_or_default()
+    }
+
     pub fn insert(&mut self, entry: Entry) {
         let Entry {
             name,
@@ -60,13 +67,6 @@ impl Ledger {
     }
 }
 
-pub fn load(path: &Path) -> Ledger {
-    File::open(path)
-        .map(BufReader::new)
-        .map(|file| serde_json::from_reader(file).unwrap())
-        .unwrap_or_default()
-}
-
 /// Find all missing numbers up to and including the current issue that have not already been issued.
 fn missing_issue_numbers(already_issued: &HashSet<u32>, current_issue: Option<u32>) -> Vec<u32> {
     current_issue.map_or_else(Vec::default, |current_issue| {
@@ -79,6 +79,7 @@ fn missing_issue_numbers(already_issued: &HashSet<u32>, current_issue: Option<u3
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
+    use tempfile::NamedTempFile;
 
     use super::Entry;
     use super::Ledger;
@@ -110,5 +111,35 @@ mod tests {
     #[test_case(vec![1, 2, 3], None => Vec::<u32>::default(); "none issued yet")]
     fn missing_issue_numbers(already_issued: Vec<u32>, current_issue: Option<u32>) -> Vec<u32> {
         super::missing_issue_numbers(&already_issued.into_iter().collect(), current_issue)
+    }
+
+    #[test]
+    fn io() {
+        let mut ledger = Ledger::default();
+
+        ledger.insert(Entry {
+            name: "path/to/project".to_string(),
+            issue_number: 2,
+            issue_id: "1234".to_string(),
+            created: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+            due: Some(NaiveDate::from_ymd_opt(2024, 1, 1).unwrap()),
+        });
+
+        ledger.insert(Entry {
+            name: "other/project".to_string(),
+            issue_number: 4,
+            issue_id: "5678".to_string(),
+            created: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+            due: Some(NaiveDate::from_ymd_opt(2024, 1, 1).unwrap()),
+        });
+
+        let file = NamedTempFile::new().unwrap();
+        let path = file.path();
+
+        ledger.save(path).unwrap();
+
+        let loaded = Ledger::load(path);
+
+        assert_eq!(ledger, loaded);
     }
 }
