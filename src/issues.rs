@@ -31,14 +31,17 @@ where
 }
 
 impl Issue {
-    /// Find the most recent issue number that should have already been published based on today's date
-    pub fn most_recent_issue(&self, today: NaiveDate) -> u32 {
+    /// Find the most recent issue number that should have already been published based on today's date.
+    ///
+    /// If no issue should be published yet, returns [`None`].
+    pub fn most_recent_issue(&self, today: NaiveDate) -> Option<u32> {
         let end = self.end.map_or(today, |end| end.min(today));
 
         let duration_since_start = end - self.start;
         let duration_to_due = duration_since_start + self.notice;
         let periods = duration_to_due.num_seconds() / self.tempo.num_seconds();
-        periods as u32
+
+        u32::try_from(periods).ok()
     }
 
     /// The path to the template associated with this Issue
@@ -75,10 +78,11 @@ mod tests {
 
     use super::Issue;
 
-    #[test_case(NaiveDate::from_ymd_opt(2023, 11, 4).expect("invalid date") => 0 ; "issue '0' should be published the day before the start date")]
-    #[test_case(NaiveDate::from_ymd_opt(2023, 11, 10).expect("invalid date") => 0 ; "5 days after start, issue '0' is still the latest issue that should be published")]
-    #[test_case(NaiveDate::from_ymd_opt(2023, 11, 11).expect("invalid date") => 1 ; "6 days after start, issue '1' should be published")]
-    fn most_recent_issue(today: NaiveDate) -> u32 {
+    #[test_case(NaiveDate::from_ymd_opt(2023, 11, 4).expect("invalid date") => Some(0) ; "issue '0' should be published the day before the start date")]
+    #[test_case(NaiveDate::from_ymd_opt(2023, 11, 10).expect("invalid date") => Some(0) ; "5 days after start, issue '0' is still the latest issue that should be published")]
+    #[test_case(NaiveDate::from_ymd_opt(2023, 11, 11).expect("invalid date") => Some(1) ; "6 days after start, issue '1' should be published")]
+    #[test_case(NaiveDate::from_ymd_opt(2022, 11, 11).expect("invalid date") => None ; "date before start date")]
+    fn most_recent_issue(today: NaiveDate) -> Option<u32> {
         let issue = Issue {
             project: "path/to/project".to_string(),
             start: NaiveDate::from_ymd_opt(2023, 11, 5).expect("invalid date"),

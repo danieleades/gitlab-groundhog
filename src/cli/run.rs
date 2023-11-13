@@ -150,16 +150,21 @@ fn issues_to_create_for_name<'a>(
         .copied()
         .unwrap_or(0);
 
-    (last_published + 1..=current_issue).map(move |issue_number| {
-        let payload = CreateIssuePayload {
-            project_path: issue.project.clone(),
-            description: Some(render(issue.template())),
-            due: Some(issue.due_date(issue_number)),
-            title: name.to_string(),
-        };
+    current_issue
+        .map(|current_issue| {
+            (last_published + 1..=current_issue).map(move |issue_number| {
+                let payload = CreateIssuePayload {
+                    project_path: issue.project.clone(),
+                    description: Some(render(issue.template())),
+                    due: Some(issue.due_date(issue_number)),
+                    title: name.to_string(),
+                };
 
-        (issue_number, payload)
-    })
+                (issue_number, payload)
+            })
+        })
+        .into_iter()
+        .flatten()
 }
 
 fn render(template: &str) -> String {
