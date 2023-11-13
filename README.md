@@ -1,5 +1,7 @@
 # GroundHog
 
+[![codecov](https://codecov.io/gh/danieleades/gitlab-groundhog/graph/badge.svg?token=nkwdf2qdhs)](https://codecov.io/gh/danieleades/gitlab-groundhog)
+
 A small utility for creating recurring tasks in Gitlab.
 
 ## Installation

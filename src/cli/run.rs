@@ -51,7 +51,7 @@ impl Command {
     pub async fn run(&self) -> anyhow::Result<()> {
         let issues = issues::load(&self.issues)?;
 
-        let ledger = ledger::load(&self.log);
+        let ledger = Ledger::load(&self.log)?;
 
         let to_create: Vec<_> = issues_to_create(self.date, &ledger, &issues).collect();
 
@@ -79,7 +79,8 @@ impl Command {
                     Err(e) => eprintln!("{e}"),
                 }
             }
-            ledger.save(&self.log)
+            ledger.save(&self.log)?;
+            Ok(())
         } else {
             Ok(())
         }
@@ -144,22 +145,19 @@ fn issues_to_create_for_name<'a>(
 ) -> impl Iterator<Item = (u32, CreateIssuePayload)> + 'a {
     let current_issue = issue.most_recent_issue(date);
 
-    let last_published = ledger
-        .get(name)
-        .and_then(|entries| entries.keys().last())
-        .copied()
-        .unwrap_or(0);
+    ledger
+        .missing_issues(name, current_issue)
+        .into_iter()
+        .map(|issue_number| {
+            let payload = CreateIssuePayload {
+                project_path: issue.project.clone(),
+                description: Some(render(issue.template())),
+                due: Some(issue.due_date(issue_number)),
+                title: name.to_string(),
+            };
 
-    (last_published + 1..=current_issue).map(move |issue_number| {
-        let payload = CreateIssuePayload {
-            project_path: issue.project.clone(),
-            description: Some(render(issue.template())),
-            due: Some(issue.due_date(issue_number)),
-            title: name.to_string(),
-        };
-
-        (issue_number, payload)
-    })
+            (issue_number, payload)
+        })
 }
 
 fn render(template: &str) -> String {
