@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
@@ -43,14 +43,20 @@ impl Ledger {
         self.0.entry(name).or_default().insert(issue_number, data);
     }
 
-    pub fn get(&self, name: &str) -> Option<&BTreeMap<u32, Data>> {
-        self.0.get(name)
-    }
-
     pub fn save(&self, path: impl AsRef<Path>) -> anyhow::Result<()> {
         let file = BufWriter::new(File::options().create(true).write(true).open(path)?);
         serde_json::to_writer_pretty(file, &self)?;
         Ok(())
+    }
+
+    pub fn missing_issues(&self, name: &str, current_issue: Option<u32>) -> Vec<u32> {
+        let already_issued = self
+            .0
+            .get(name)
+            .map(|entries| entries.keys().copied().collect())
+            .unwrap_or_default();
+
+        missing_issue_numbers(&already_issued, current_issue)
     }
 }
 
@@ -59,6 +65,15 @@ pub fn load(path: &Path) -> Ledger {
         .map(BufReader::new)
         .map(|file| serde_json::from_reader(file).unwrap())
         .unwrap_or_default()
+}
+
+/// Find all missing numbers up to and including the current issue that have not already been issued.
+fn missing_issue_numbers(already_issued: &HashSet<u32>, current_issue: Option<u32>) -> Vec<u32> {
+    current_issue.map_or_else(Vec::default, |current_issue| {
+        (0..=current_issue)
+            .filter(|&n| !already_issued.contains(&n))
+            .collect()
+    })
 }
 
 #[cfg(test)]
@@ -82,7 +97,18 @@ mod tests {
 
         ledger.insert(entry);
 
-        assert!(ledger.get("wrong/project").is_none());
-        assert!(ledger.get("path/to/project").is_some());
+        assert!(ledger.0.get("wrong/project").is_none());
+        assert!(ledger.0.get("path/to/project").is_some());
+    }
+
+    use test_case::test_case;
+
+    #[test_case(vec![0, 1, 3, 5], Some(5) => vec![2, 4]; "missing values")]
+    #[test_case(vec![0, 1, 2, 3], Some(3) => Vec::<u32>::default(); "no missing value")]
+    #[test_case(vec![0, 1, 2, 3], Some(4) => vec![4]; "missing last")]
+    #[test_case(vec![1, 2, 3], Some(3) => vec![0]; "missing first")]
+    #[test_case(vec![1, 2, 3], None => Vec::<u32>::default(); "none issued yet")]
+    fn missing_issue_numbers(already_issued: Vec<u32>, current_issue: Option<u32>) -> Vec<u32> {
+        super::missing_issue_numbers(&already_issued.into_iter().collect(), current_issue)
     }
 }
