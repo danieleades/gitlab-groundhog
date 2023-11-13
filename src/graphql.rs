@@ -19,8 +19,21 @@ pub struct CreateIssuePayload {
     pub due: Option<NaiveDate>,
 }
 
-pub async fn create_issue(url: &str, payload: CreateIssuePayload) -> reqwest::Result<String> {
-    let client = reqwest::Client::new();
+pub async fn create_issue(
+    url: &str,
+    api_key: &str,
+    payload: CreateIssuePayload,
+) -> reqwest::Result<String> {
+    let client = reqwest::Client::builder()
+        .default_headers(
+            std::iter::once((
+                reqwest::header::AUTHORIZATION,
+                reqwest::header::HeaderValue::from_str(&format!("Bearer {api_key}")).unwrap(),
+            ))
+            .collect(),
+        )
+        .build()
+        .unwrap();
 
     let variables = create_issue::Variables {
         project_path: payload.project_path,
