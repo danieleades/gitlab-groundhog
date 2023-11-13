@@ -92,7 +92,7 @@ impl Command {
                 .with_prompt("create issues?")
                 .default(true)
                 .interact()
-                .unwrap()
+                .expect("unable to read terminal input")
     }
 
     async fn send(
