@@ -16,8 +16,10 @@ pub enum Command {
 impl Command {
     pub async fn run(&self) -> anyhow::Result<()> {
         match self {
-            Self::Run(command) => command.run().await,
-            Self::Init(command) => command.run(),
-        }
+            Self::Run(command) => command.run().await?,
+            Self::Init(command) => command.run()?,
+        };
+
+        Ok(())
     }
 }

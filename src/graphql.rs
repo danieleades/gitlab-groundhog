@@ -24,16 +24,14 @@ pub async fn create_issue(
     api_key: &str,
     payload: CreateIssuePayload,
 ) -> reqwest::Result<String> {
+    let auth_header = (
+        reqwest::header::AUTHORIZATION,
+        reqwest::header::HeaderValue::from_str(&format!("Bearer {api_key}")).unwrap(),
+    );
+
     let client = reqwest::Client::builder()
-        .default_headers(
-            std::iter::once((
-                reqwest::header::AUTHORIZATION,
-                reqwest::header::HeaderValue::from_str(&format!("Bearer {api_key}")).unwrap(),
-            ))
-            .collect(),
-        )
-        .build()
-        .unwrap();
+        .default_headers(std::iter::once(auth_header).collect())
+        .build()?;
 
     let variables = create_issue::Variables {
         project_path: payload.project_path,

@@ -1,6 +1,5 @@
-use std::path::PathBuf;
+use std::{io, path::PathBuf};
 
-use anyhow::Ok;
 use clap::Parser;
 
 const ISSUES: &str = include_str!("issues.yml");
@@ -15,7 +14,7 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(&self) -> anyhow::Result<()> {
+    pub fn run(&self) -> io::Result<()> {
         std::fs::create_dir_all(self.path.join("templates"))?;
         std::fs::write(self.path.join("templates/my-template.md"), "body text\n")?;
 
