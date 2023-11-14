@@ -19,11 +19,19 @@ pub struct CreateIssuePayload {
     pub due: Option<NaiveDate>,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("failed to make http request: {0}")]
+    Reqwest(#[from] reqwest::Error),
+    #[error("Gitlab rejected the request")]
+    Gitlab,
+}
+
 pub async fn create_issue(
     url: &str,
     api_key: &str,
     payload: CreateIssuePayload,
-) -> reqwest::Result<String> {
+) -> Result<String, Error> {
     let auth_header = (
         reqwest::header::AUTHORIZATION,
         reqwest::header::HeaderValue::from_str(&format!("Bearer {api_key}")).unwrap(),
@@ -43,6 +51,10 @@ pub async fn create_issue(
     let response =
         graphql_client::reqwest::post_graphql::<CreateIssue, _>(&client, url, variables).await?;
 
+    // TODO: this error handling is a bit shit.
+    if response.errors.is_some() {
+        return Err(Error::Gitlab);
+    }
     Ok(response
         .data
         .unwrap()

@@ -43,7 +43,7 @@ pub struct Command {
     /// The gitlab API key.
     ///
     /// This should usually be set by environment variable
-    #[arg(short, long, env = "GTILAB_API_KEY")]
+    #[arg(short, long, env = "GITLAB_API_KEY")]
     api: String,
 }
 
@@ -99,7 +99,7 @@ impl Command {
         &self,
         issue_number: u32,
         payload: CreateIssuePayload,
-    ) -> reqwest::Result<ledger::Entry> {
+    ) -> Result<ledger::Entry, graphql::Error> {
         let name = payload.title.clone();
         let due = payload.due;
         let issue_id = graphql::create_issue(self.url.as_str(), &self.api, payload).await?;
@@ -118,7 +118,7 @@ impl Command {
     async fn send_all(
         &self,
         to_create: Vec<(u32, CreateIssuePayload)>,
-    ) -> Vec<reqwest::Result<ledger::Entry>> {
+    ) -> Vec<Result<ledger::Entry, graphql::Error>> {
         futures::future::join_all(
             to_create
                 .into_iter()
