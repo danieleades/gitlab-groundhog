@@ -17,6 +17,7 @@ pub struct CreateIssuePayload {
     pub title: String,
     pub description: Option<String>,
     pub due: Option<NaiveDate>,
+    pub assignees: Vec<String>,
 }
 
 #[derive(Debug, thiserror::Error)]

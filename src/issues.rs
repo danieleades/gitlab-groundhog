@@ -19,6 +19,10 @@ pub struct Issue {
     #[serde(deserialize_with = "parse_humantime_duration")]
     notice: Duration,
     template: String,
+    #[serde(default)]
+    pub assignees: Vec<String>,
+    #[serde(default)]
+    pub template_args: serde_json::Map<String, serde_json::Value>,
 }
 
 fn parse_humantime_duration<'de, D>(d: D) -> Result<Duration, D::Error>
@@ -87,11 +91,11 @@ mod tests {
             project: "path/to/project".to_string(),
             start: NaiveDate::from_ymd_opt(2023, 11, 5).expect("invalid date"),
             end: None,
-            // every week
             tempo: Duration::weeks(1),
-            // 1 day before due date
             notice: Duration::days(1),
             template: String::from("template.md"),
+            assignees: Vec::default(),
+            template_args: serde_json::Map::default(),
         };
 
         issue.most_recent_issue(today)

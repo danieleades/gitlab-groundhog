@@ -1,10 +1,28 @@
 # yaml-language-server: $schema=./issues.schema.json
 ---
-
 regression testing:
+  # The path to the project in Gitlab where the issue should be created
   project: path/to/project
+
+  # The template to use for the issue, relative to the templates/ directory
   template: regression-testing.md
+
+  # How far in advance of the due date the issue should be created
   notice: 2w
+
+  # The period with which the issue recurs
   tempo: 9w
-  start: '2023-07-31'
-  end: '2024-03-01'
+
+  # The due date of the first recurrence of the issue
+  start: "2023-07-31"
+
+  # the due date after which no new issues should be created (optional)
+  end: "2024-03-01"
+
+  # Optionally specify the people that should be assigned to the issue (optional)
+  assignees: [john.doe]
+
+  # key-value pairs can be passed through to templates that support them (optional)
+  template-args:
+    - key1: value1
+    - key2: value2

@@ -1,3 +1,3 @@
-# Recurring Issue
+# Regression Testing {% if project %} - {{ project }}{% endif %}
 
 body text
