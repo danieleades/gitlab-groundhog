@@ -1,6 +1,7 @@
 use clap::Parser;
 
 mod init;
+mod preview;
 mod run;
 
 #[derive(Debug, Parser)]
@@ -11,6 +12,9 @@ pub enum Command {
 
     /// Set up a new GroundHog directory
     Init(init::Command),
+
+    /// Preview a rendered template
+    Preview(preview::Command),
 }
 
 impl Command {
@@ -18,6 +22,7 @@ impl Command {
         match self {
             Self::Run(command) => command.run().await?,
             Self::Init(command) => command.run()?,
+            Self::Preview(command) => command.run()?,
         };
 
         Ok(())
