@@ -7,8 +7,8 @@ regression testing:
   tempo: 9w
   start: '2023-07-31'
   end: '2024-03-01'
-  args:
-    - project: TEST
+  template_args:
+    project: EXAMPLE PROJECT
 
 exploratory testing:
   project: other/project

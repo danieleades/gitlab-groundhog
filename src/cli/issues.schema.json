@@ -32,6 +32,10 @@
                 "type": "string",
                 "format": "duration",
                 "description": "how often the issue should recur"
+            },
+            "template-args": {
+                "type":"object",
+                "description": "a list of arguments to pass through to the template during rendering"
             }
         },
         "required": [
@@ -40,6 +44,7 @@
             "start",
             "template",
             "tempo"
-        ]
+        ],
+        "additionalProperties": false
     }
 }

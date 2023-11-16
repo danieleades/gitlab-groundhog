@@ -47,7 +47,6 @@ impl Command {
                 tera::Context::default()
             };
 
-            println!("context: {:#?}", &context);
             let rendered = templates.render(template_name, &context)?;
             println!("{rendered}");
         } else {
