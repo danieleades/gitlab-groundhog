@@ -39,7 +39,10 @@ impl Command {
                 a.push('\n');
                 a
             });
-            eprintln!("template '{}' not found! choose from the following options:\n{options}", self.template.display());
+            eprintln!(
+                "template '{}' not found! choose from the following options:\n{options}",
+                self.template.display()
+            );
         }
 
         Ok(())
