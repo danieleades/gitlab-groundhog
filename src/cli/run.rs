@@ -2,6 +2,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use chrono::NaiveDate;
 use clap::Parser;
+use comfy_table::{Table, presets::NOTHING};
 use dialoguer::Confirm;
 use reqwest::Url;
 use tera::Tera;
@@ -69,7 +70,20 @@ impl Command {
         mut ledger: Ledger,
         to_create: Vec<(u32, CreateIssuePayload)>,
     ) -> anyhow::Result<()> {
-        println!("to create: {to_create:#?}");
+        let mut table = Table::new();
+        table.set_header(vec!["project", "title", "due"]);
+        table.load_preset(NOTHING);
+
+        let rows = to_create.iter().map(|(_, payload)| {
+                vec![payload.project_path.clone(), payload.title.clone(), payload.due.map(|date| date.clone().to_string()).unwrap_or_default()]
+        });
+
+        table.add_rows(
+            rows
+        );
+
+        println!("\nto create:\n\n{table}\n");
+
         if self.confirm() {
             let to_record = self.send_all(to_create).await;
 
@@ -80,16 +94,14 @@ impl Command {
                 }
             }
             ledger.save(&self.log)?;
-            Ok(())
-        } else {
-            Ok(())
         }
+            Ok(())
     }
 
     fn confirm(&self) -> bool {
         self.yes
             || Confirm::new()
-                .with_prompt("create issues?")
+                .with_prompt("continue?")
                 .default(true)
                 .interact()
                 .expect("unable to read terminal input")
