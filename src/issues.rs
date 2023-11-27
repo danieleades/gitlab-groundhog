@@ -10,6 +10,7 @@ use std::str::FromStr;
 
 /// A recurring Gitlab issue
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct Issue {
     pub project: String,
     start: NaiveDate,
@@ -19,6 +20,10 @@ pub struct Issue {
     #[serde(deserialize_with = "parse_humantime_duration")]
     notice: Duration,
     template: String,
+    #[serde(default)]
+    pub labels: Vec<String>,
+    #[serde(default)]
+    pub template_args: serde_json::Map<String, serde_json::Value>,
 }
 
 fn parse_humantime_duration<'de, D>(d: D) -> Result<Duration, D::Error>
@@ -87,13 +92,18 @@ mod tests {
             project: "path/to/project".to_string(),
             start: NaiveDate::from_ymd_opt(2023, 11, 5).expect("invalid date"),
             end: None,
-            // every week
             tempo: Duration::weeks(1),
-            // 1 day before due date
             notice: Duration::days(1),
             template: String::from("template.md"),
+            labels: Vec::default(),
+            template_args: serde_json::Map::default(),
         };
 
         issue.most_recent_issue(today)
+    }
+
+    #[test]
+    fn can_deserialise() {
+        super::load("src/cli/issues.yml").unwrap();
     }
 }

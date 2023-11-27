@@ -53,7 +53,7 @@ impl Command {
 
         let ledger = Ledger::load(&self.log)?;
 
-        let to_create: Vec<_> = issues_to_create(self.date, &ledger, &issues).collect();
+        let to_create: Vec<_> = issues_to_create(self.date, &ledger, issues).collect();
 
         if to_create.is_empty() {
             println!("no issues to create");
@@ -128,42 +128,43 @@ impl Command {
     }
 }
 
-fn issues_to_create<'a>(
+fn issues_to_create(
     date: NaiveDate,
-    ledger: &'a Ledger,
-    issues: &'a HashMap<String, Issue>,
-) -> impl Iterator<Item = (u32, CreateIssuePayload)> + 'a {
+    ledger: &Ledger,
+    issues: HashMap<String, Issue>,
+) -> impl Iterator<Item = (u32, CreateIssuePayload)> + '_ {
     issues
-        .iter()
+        .into_iter()
         .flat_map(move |(name, issue)| issues_to_create_for_name(date, ledger, (name, issue)))
 }
 
-fn issues_to_create_for_name<'a>(
+fn issues_to_create_for_name(
     date: NaiveDate,
-    ledger: &'a Ledger,
-    (name, issue): (&'a String, &'a Issue),
-) -> impl Iterator<Item = (u32, CreateIssuePayload)> + 'a {
+    ledger: &Ledger,
+    (name, issue): (String, Issue),
+) -> impl Iterator<Item = (u32, CreateIssuePayload)> + '_ {
     let current_issue = issue.most_recent_issue(date);
 
     ledger
-        .missing_issues(name, current_issue)
+        .missing_issues(&name, current_issue)
         .into_iter()
-        .map(|issue_number| {
+        .map(move |issue_number| {
             let payload = CreateIssuePayload {
                 project_path: issue.project.clone(),
-                description: Some(render(issue.template())),
+                description: Some(render(issue.template(), issue.template_args.clone())),
                 due: Some(issue.due_date(issue_number)),
                 title: name.to_string(),
+                labels: issue.labels.clone(),
             };
 
             (issue_number, payload)
         })
 }
 
-fn render(template: &str) -> String {
+fn render(template: &str, args: serde_json::Map<String, serde_json::Value>) -> String {
     let templates = Tera::new("templates/**/*").unwrap();
 
-    templates
-        .render(template, &tera::Context::default())
-        .unwrap()
+    let context = tera::Context::from_value(args.into()).unwrap();
+
+    templates.render(template, &context).unwrap()
 }

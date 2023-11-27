@@ -1,7 +1,10 @@
 use std::{collections::HashSet, path::PathBuf};
 
+use anyhow::bail;
 use clap::Parser;
 use tera::Tera;
+
+use crate::issues;
 
 #[derive(Debug, Parser)]
 pub struct Command {
@@ -11,6 +14,10 @@ pub struct Command {
     /// Path to directory containing template files.
     #[arg(short, long, env = "GROUNDHOG_TEMPLATES", default_value = "templates/")]
     templates: PathBuf,
+
+    /// Path to the yaml file defining the recurring issues
+    #[arg(long, env = "GROUNDHOG_ISSUES", default_value = "issues.yml")]
+    issues: PathBuf,
 
     /// The name of the issue.
     ///
@@ -29,7 +36,21 @@ impl Command {
         let template_name: &str = self.template.to_str().unwrap();
 
         if names.contains(template_name) {
-            let rendered = templates.render(template_name, &tera::Context::default())?;
+            let context = if let Some(issue_name) = &self.issue {
+                let mut issues = issues::load(&self.issues)?;
+                if let Some(issue) = issues.remove(issue_name) {
+                    dbg!(&issue);
+                    tera::Context::from_value(issue.template_args.into()).unwrap()
+                } else {
+                    bail!("could not find specified issue")
+                }
+            } else {
+                tera::Context::default()
+            };
+
+            dbg!(&context);
+
+            let rendered = templates.render(template_name, &context)?;
             println!("{rendered}");
         } else {
             let options = names.into_iter().fold(String::new(), |mut a, b| {
