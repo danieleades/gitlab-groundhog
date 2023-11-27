@@ -10,6 +10,7 @@ use std::str::FromStr;
 
 /// A recurring Gitlab issue
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct Issue {
     pub project: String,
     start: NaiveDate,

@@ -33,13 +33,6 @@
                 "format": "duration",
                 "description": "how often the issue should recur"
             },
-            "assignees": {
-                "description": "a list of arguments to pass through to the template during rendering",
-                "type":"array",
-                "items": {
-                    "type": "string"
-                }
-            },
             "labels": {
                 "description": "a list of arguments to pass through to the template during rendering",
                 "type":"array",

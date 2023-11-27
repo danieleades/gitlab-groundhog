@@ -19,9 +19,6 @@ regression testing:
   # the due date after which no new issues should be created (optional)
   end: "2024-03-01"
 
-  # Optionally set issue assignees
-  assignees: ["alice", "bob"]
-
   # Optionally set default issue labels
   labels: ["label1", "label2"]
 

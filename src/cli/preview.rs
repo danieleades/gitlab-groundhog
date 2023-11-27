@@ -39,6 +39,7 @@ impl Command {
             let context = if let Some(issue_name) = &self.issue {
                 let mut issues = issues::load(&self.issues)?;
                 if let Some(issue) = issues.remove(issue_name) {
+                    dbg!(&issue);
                     tera::Context::from_value(issue.template_args.into()).unwrap()
                 } else {
                     bail!("could not find specified issue")
@@ -46,6 +47,8 @@ impl Command {
             } else {
                 tera::Context::default()
             };
+
+            dbg!(&context);
 
             let rendered = templates.render(template_name, &context)?;
             println!("{rendered}");
