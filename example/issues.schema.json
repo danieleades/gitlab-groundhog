@@ -33,8 +33,15 @@
                 "format": "duration",
                 "description": "how often the issue should recur"
             },
-            "template_args": {
-                "type": "object",
+            "labels": {
+                "description": "a list of labels to apply to the issue",
+                "type":"array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "template-args": {
+                "type":"object",
                 "description": "a list of arguments to pass through to the template during rendering"
             }
         },
