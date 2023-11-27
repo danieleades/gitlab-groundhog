@@ -101,4 +101,9 @@ mod tests {
 
         issue.most_recent_issue(today)
     }
+
+    #[test]
+    fn can_deserialise() {
+        super::load("src/cli/issues.yml").unwrap();
+    }
 }
