@@ -17,7 +17,7 @@ pub struct CreateIssuePayload {
     pub title: String,
     pub description: Option<String>,
     pub due: Option<NaiveDate>,
-    pub assignees: Vec<String>,
+    pub labels: Vec<String>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -47,6 +47,7 @@ pub async fn create_issue(
         title: payload.title,
         description: payload.description,
         due: payload.due,
+        labels: Some(payload.labels),
     };
 
     let response =
@@ -63,5 +64,5 @@ pub async fn create_issue(
         .unwrap()
         .issue
         .unwrap()
-        .iid)
+        .id)
 }

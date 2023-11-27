@@ -20,7 +20,7 @@ pub struct Issue {
     notice: Duration,
     template: String,
     #[serde(default)]
-    pub assignees: Vec<String>,
+    pub labels: Vec<String>,
     #[serde(default)]
     pub template_args: serde_json::Map<String, serde_json::Value>,
 }
@@ -94,7 +94,7 @@ mod tests {
             tempo: Duration::weeks(1),
             notice: Duration::days(1),
             template: String::from("template.md"),
-            assignees: Vec::default(),
+            labels: Vec::default(),
             template_args: serde_json::Map::default(),
         };
 

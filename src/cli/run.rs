@@ -154,7 +154,7 @@ fn issues_to_create_for_name(
                 description: Some(render(issue.template(), issue.template_args.clone())),
                 due: Some(issue.due_date(issue_number)),
                 title: name.to_string(),
-                assignees: issue.assignees.clone(),
+                labels: issue.labels.clone(),
             };
 
             (issue_number, payload)
