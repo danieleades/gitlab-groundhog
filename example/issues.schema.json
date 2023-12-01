@@ -26,7 +26,7 @@
             "template": {
                 "type": "string",
                 "description": "path to the template to use for the body of the issue, relative to the templates/ directory",
-                "pattern": "^[a-zA-Z\\s\\/\\-]*\\.?[a-zA-Z0-9]*$"
+                "pattern": "^[a-zA-Z\\s\\/\\-_]*\\.?[a-zA-Z0-9]*$"
             },
             "tempo": {
                 "type": "string",
@@ -34,7 +34,7 @@
                 "description": "how often the issue should recur"
             },
             "labels": {
-                "description": "a list of labels to apply to the issue",
+                "description": "a list of arguments to pass through to the template during rendering",
                 "type":"array",
                 "items": {
                     "type": "string"
