@@ -52,7 +52,13 @@ impl Ledger {
     }
 
     pub fn save(&self, path: impl AsRef<Path>) -> io::Result<()> {
-        let file = BufWriter::new(File::options().create(true).write(true).open(path)?);
+        let file = BufWriter::new(
+            File::options()
+                .create(true)
+                .truncate(true)
+                .write(true)
+                .open(path)?,
+        );
         serde_json::to_writer_pretty(file, &self).unwrap();
         Ok(())
     }
