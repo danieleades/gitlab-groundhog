@@ -114,8 +114,8 @@ mod tests {
 
         ledger.insert(entry);
 
-        assert!(ledger.0.get("wrong/project").is_none());
-        assert!(ledger.0.get("path/to/project").is_some());
+        assert!(!ledger.0.contains_key("wrong/project"));
+        assert!(ledger.0.contains_key("path/to/project"));
     }
 
     use test_case::test_case;
