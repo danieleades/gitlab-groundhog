@@ -56,7 +56,7 @@ impl Issue {
 
     /// Calculate the date the given issue number should be due.
     pub fn due_date(&self, number: u32) -> NaiveDate {
-        let elapsed = Duration::milliseconds(self.tempo.num_milliseconds() * i64::from(number));
+        let elapsed = Duration::try_milliseconds(self.tempo.num_milliseconds() * i64::from(number)).unwrap();
         self.start + elapsed
     }
 }
@@ -92,8 +92,8 @@ mod tests {
             project: "path/to/project".to_string(),
             start: NaiveDate::from_ymd_opt(2023, 11, 5).expect("invalid date"),
             end: None,
-            tempo: Duration::weeks(1),
-            notice: Duration::days(1),
+            tempo: Duration::try_weeks(1).unwrap(),
+            notice: Duration::try_days(1).unwrap(),
             template: String::from("template.md"),
             labels: Vec::default(),
             template_args: serde_json::Map::default(),
