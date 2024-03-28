@@ -56,7 +56,8 @@ impl Issue {
 
     /// Calculate the date the given issue number should be due.
     pub fn due_date(&self, number: u32) -> NaiveDate {
-        let elapsed = Duration::try_milliseconds(self.tempo.num_milliseconds() * i64::from(number)).unwrap();
+        let elapsed =
+            Duration::try_milliseconds(self.tempo.num_milliseconds() * i64::from(number)).unwrap();
         self.start + elapsed
     }
 }
