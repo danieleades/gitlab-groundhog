@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use graphql_client::GraphQLQuery;
+use graphql_client::{GraphQLQuery, Response};
 
 type ISO8601Date = NaiveDate;
 
@@ -50,8 +50,10 @@ pub async fn create_issue(
         labels: Some(payload.labels),
     };
 
-    let response =
-        graphql_client::reqwest::post_graphql::<CreateIssue, _>(&client, url, variables).await?;
+    let request_body = CreateIssue::build_query(variables);
+
+    let res = client.post(url).json(&request_body).send().await?;
+    let response: Response<create_issue::ResponseData> = res.json().await?;
 
     // TODO: this error handling is a bit shit.
     if response.errors.is_some() {
