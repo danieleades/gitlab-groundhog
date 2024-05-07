@@ -23,6 +23,6 @@ thiserror = "1.0.60"
 tokio = { version = "1.37.0", features = ["rt-multi-thread", "macros"] }
 
 [dev-dependencies]
-jsonschema = "0.17.1"
+jsonschema = "0.18.0"
 tempfile = "3.10.1"
 test-case = "3.3.1"
