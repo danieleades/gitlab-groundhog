@@ -16,7 +16,7 @@ graphql_client = "0.14.0"
 humantime = "2.1.0"
 reqwest = { version = "0.12.5", features = ["json"] }
 serde = { version = "1.0.203", features = ["derive"] }
-serde_json = "1.0.117"
+serde_json = "1.0.118"
 serde_yaml = "0.9.34"
 tera = "1.20.0"
 thiserror = "1.0.61"
