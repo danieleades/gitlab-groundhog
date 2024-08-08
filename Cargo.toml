@@ -15,7 +15,7 @@ futures = "0.3.30"
 graphql_client = "0.14.0"
 humantime = "2.1.0"
 reqwest = { version = "0.12.5", features = ["json"] }
-serde = { version = "1.0.204", features = ["derive"] }
+serde = { version = "1.0.205", features = ["derive"] }
 serde_json = "1.0.122"
 serde_yaml = "0.9.34"
 tera = "1.20.0"
