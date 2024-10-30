@@ -20,7 +20,7 @@ serde_json = "1.0.132"
 serde_yaml = "0.9.34"
 tera = "1.20.0"
 thiserror = "1.0.65"
-tokio = { version = "1.40.0", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.41.0", features = ["rt-multi-thread", "macros"] }
 
 [dev-dependencies]
 jsonschema = "0.20.0"
