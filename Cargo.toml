@@ -9,17 +9,17 @@ rust-version = "1.74.0"
 [dependencies]
 anyhow = "1.0.95"
 chrono = { version = "0.4.39", features = ["serde"] }
-clap = { version = "4.5.26", features = ["derive", "env"] }
+clap = { version = "4.5.27", features = ["derive", "env"] }
 dialoguer = { version = "0.11.0", default-features = false }
 futures = "0.3.31"
 graphql_client = "0.14.0"
 humantime = "2.1.0"
 reqwest = { version = "0.12.12", features = ["json"] }
 serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.135"
+serde_json = "1.0.138"
 serde_yaml = "0.9.34"
 tera = "1.20.0"
-thiserror = "2.0.10"
+thiserror = "2.0.11"
 tokio = { version = "1.43.0", features = ["rt-multi-thread", "macros"] }
 
 [dev-dependencies]
