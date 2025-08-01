@@ -9,18 +9,18 @@ rust-version = "1.74.0"
 [dependencies]
 anyhow = "1.0.98"
 chrono = { version = "0.4.41", features = ["serde"] }
-clap = { version = "4.5.40", features = ["derive", "env"] }
+clap = { version = "4.5.42", features = ["derive", "env"] }
 dialoguer = { version = "0.11.0", default-features = false }
 futures = "0.3.31"
 graphql_client = "0.14.0"
 humantime = "2.2.0"
 reqwest = { version = "0.12.22", features = ["json"] }
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.142"
 serde_yaml = "0.9.34"
 tera = "1.20.0"
 thiserror = "2.0.12"
-tokio = { version = "1.47.0", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.47.1", features = ["rt-multi-thread", "macros"] }
 
 [dev-dependencies]
 jsonschema = "0.21.0"
