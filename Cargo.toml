@@ -7,19 +7,19 @@ rust-version = "1.74.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.100"
-chrono = { version = "0.4.42", features = ["serde"] }
-clap = { version = "4.5.48", features = ["derive", "env"] }
+anyhow = "1.0.102"
+chrono = { version = "0.4.44", features = ["serde"] }
+clap = { version = "4.5.60", features = ["derive", "env"] }
 dialoguer = { version = "0.12.0", default-features = false }
-futures = "0.3.31"
+futures = "0.3.32"
 graphql_client = "0.16.0"
 humantime = "2.3.0"
-reqwest = { version = "0.13.1", features = ["json"] }
+reqwest = { version = "0.13.2", features = ["json"] }
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.145"
+serde_json = "1.0.149"
 serde_yaml = "0.9.34"
-tera = "1.20.0"
-thiserror = "2.0.17"
+tera = "1.20.1"
+thiserror = "2.0.18"
 tokio = { version = "1.50.0", features = ["rt-multi-thread", "macros"] }
 
 [dev-dependencies]
